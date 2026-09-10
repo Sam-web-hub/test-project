@@ -28,7 +28,7 @@ export default async function Home() {
   const todos = await fetchTodos();
 
   return (
-    <main className="mx-auto w-full max-w-3xl py-8">
+    <main className="max-w-4xl mx-auto w-full py-8 px-4 sm:px-6 lg:px-8">
       <Suspense fallback={<TodoSkeleton />}>
         <TodoList initialTodos={todos} />
       </Suspense>

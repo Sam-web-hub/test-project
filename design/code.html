@@ -1,0 +1,1144 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Todos - Minimalist Task Manager</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,600;1,6..72,600&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN with forms and container plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            serif: ['Newsreader', 'Georgia', 'serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Micro-Styles -->
+<style data-purpose="typography">
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #fafafa;
+    }
+    .font-serif-heading {
+      font-family: 'Newsreader', Georgia, serif;
+    }
+  </style>
+<style data-purpose="interactive-states">
+    /* Subtle transitions */
+    .row-transition {
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    /* Completed line-through effect */
+    .todo-completed-text {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+    /* Checkbox styling customization */
+    .custom-checkbox {
+      border-radius: 4px;
+      border-color: #d1d5db;
+      cursor: pointer;
+      transition: all 0.12s ease-in-out;
+    }
+    .custom-checkbox:checked {
+      background-color: #111827;
+      border-color: #111827;
+    }
+    .custom-checkbox:focus {
+      --tw-ring-color: #111827;
+      outline: none;
+    }
+  </style>
+<!-- END: Custom Micro-Styles -->
+<style data-purpose="delightful-table-styles">
+    /* Status Badges */
+    tbody td button:not([class*="border-red"]) {
+      transition: all 0.15s ease-in-out;
+    }
+    /* Completed Status Badge */
+    tbody td button.bg-neutral-900 {
+      background-color: #ecfdf5 !important;
+      color: #047857 !important;
+      border: 1px solid #a7f3d0 !important;
+      box-shadow: none !important;
+    }
+    tbody td button.bg-neutral-900:hover {
+      background-color: #d1fae5 !important;
+    }
+    /* Pending Status Badge */
+    tbody td button.bg-slate-100 {
+      background-color: #fffbeb !important;
+      color: #b45309 !important;
+      border: 1px solid #fde68a !important;
+    }
+    tbody td button.bg-slate-100:hover {
+      background-color: #fef3c7 !important;
+    }
+    /* Checkboxes */
+    .custom-checkbox:checked {
+      background-color: #4f46e5 !important;
+      border-color: #4f46e5 !important;
+    }
+    .custom-checkbox:focus {
+      --tw-ring-color: #4f46e5 !important;
+    }
+    /* Row Actions on Hover */
+    tbody td button[title="Edit task"]:hover {
+      color: #4f46e5 !important;
+      background-color: #eef2ff !important;
+    }
+    tbody td button[title="Delete task"]:hover {
+      color: #e11d48 !important;
+      background-color: #ffe4e6 !important;
+    }
+    /* Table row hover */
+    .row-transition:hover {
+      background-color: #f8fafc !important;
+    }
+  </style></head>
+<body class="min-h-screen text-slate-800 antialiased py-8 px-4 sm:px-6 lg:px-8">
+<!-- BEGIN: MainContainer -->
+<main class="max-w-4xl mx-auto" data-purpose="todo-application">
+<!-- BEGIN: TopBar -->
+<header class="flex items-center justify-between mb-5" data-purpose="header-section"><div class="flex items-center gap-3">
+  <h1 class="text-3xl font-serif-heading font-semibold text-slate-900 tracking-tight flex items-center gap-2.5">
+    <span class="">Todos</span>
+    <span class="inline-block w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 shadow-sm shadow-indigo-300"></span>
+  </h1>
+</div>
+<button class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-98 text-white text-sm font-medium rounded-lg shadow-sm shadow-indigo-200 transition-all duration-150 ease-in-out" data-purpose="add-todo-trigger" id="open-add-modal-btn">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+    <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <span class="">Add Todo</span>
+</button></header>
+<!-- END: TopBar -->
+<!-- BEGIN: BulkActionBar -->
+<!-- Displayed dynamically or styled smoothly as in reference Image 2 -->
+<section class="border border-slate-200/90 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 mb-4 shadow-sm flex flex-wrap items-center justify-between gap-3 transition-all duration-200 hidden" data-purpose="bulk-selection-bar" id="bulk-action-bar"><div class="flex items-center gap-2">
+  <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200/60 rounded-md" id="selected-count-badge">
+    0 selected
+  </span>
+</div>
+<div class="flex items-center gap-2 flex-wrap">
+  <!-- Mark Complete -->
+  <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors" id="bulk-mark-complete">
+    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="">Mark Complete</span>
+  </button>
+  <!-- Mark Incomplete -->
+  <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors" id="bulk-mark-incomplete">
+    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="">Mark Incomplete</span>
+  </button>
+  <!-- Delete Selected -->
+  <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 rounded-lg transition-colors" id="bulk-delete">
+    <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="">Delete Selected</span>
+  </button>
+</div></section>
+<!-- END: BulkActionBar -->
+<!-- BEGIN: QuickInlineAdd -->
+<div class="mb-4 bg-white border border-slate-200 rounded-xl p-3 shadow-sm hidden" data-purpose="inline-add-form" id="inline-add-container">
+<form class="flex flex-col sm:flex-row items-center gap-3" id="add-todo-form">
+<input class="flex-1 w-full text-sm border-slate-200 rounded-lg px-3.5 py-2 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 placeholder:text-slate-400" id="new-todo-title" placeholder="What needs to be done?" required="" type="text">
+<div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+<select class="text-xs border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-slate-700 focus:ring-1 focus:ring-neutral-900" id="new-todo-status">
+<option value="Pending">Pending</option>
+<option value="Completed">Completed</option>
+</select>
+<button class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-medium rounded-lg shadow-sm whitespace-nowrap transition-colors" type="submit">
+  Save Todo
+</button>
+<button class="px-3 py-2 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg" id="cancel-add-btn" type="button">
+            Cancel
+          </button>
+</div>
+</form>
+</div>
+<!-- END: QuickInlineAdd -->
+<!-- BEGIN: TodoTableContainer -->
+<section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden" data-purpose="todo-list-table">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="todos-table">
+<!-- Table Header -->
+<thead>
+<tr class="border-b border-slate-200 bg-white text-[13px] font-medium text-slate-500">
+<th class="w-12 px-4 py-3 text-center" scope="col">
+<input aria-label="Select all todos" class="custom-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" id="select-all-checkbox" type="checkbox">
+</th>
+<th class="py-3 px-3 font-medium text-slate-700" scope="col">Todo</th>
+<th class="py-3 px-4 w-32 font-medium text-slate-700 text-center" scope="col">Status</th>
+<th class="py-3 px-4 w-24 font-medium text-slate-700 text-right pr-6" scope="col">Actions</th>
+</tr>
+</thead>
+<!-- Table Body -->
+<tbody class="divide-y divide-slate-100 text-sm" id="todos-tbody"><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="1" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Watch a documentary">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="1" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Watch a documentary
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(1)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(1)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(1)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="2" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Invest in cryptocurrency">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="2" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Invest in cryptocurrency
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(2)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(2)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(2)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="3" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Contribute code or a monetary donation to an open-source software project">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="3" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Contribute code or a monetary donation to an open-source software project
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(3)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(3)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(3)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="4" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Solve a Rubik's cube">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="4" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Solve a Rubik's cube
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(4)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(4)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(4)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="5" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Bake pastries for yourself and neighbor">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="5" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Bake pastries for yourself and neighbor
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(5)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(5)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(5)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="6" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Go see a Broadway production">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="6" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Go see a Broadway production
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(6)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(6)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(6)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="7" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Write a thank you letter to an influential person in your life">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="7" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Write a thank you letter to an influential person in your life
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(7)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(7)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(7)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="8" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Invite some friends over for a game night">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="8" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Invite some friends over for a game night
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(8)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(8)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(8)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="9" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Have a football scrimmage with some friends">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="9" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Have a football scrimmage with some friends
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(9)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(9)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(9)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="10" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Text a friend you haven't talked to in a long time">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="10" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Text a friend you haven't talked to in a long time
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(10)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(10)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(10)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="11" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Organize pantry">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="11" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Organize pantry
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(11)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(11)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(11)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="12" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Buy a new house decoration">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="12" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Buy a new house decoration
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(12)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(12)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(12)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="13" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Plan a vacation you've always wanted to take">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="13" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Plan a vacation you've always wanted to take
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(13)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(13)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(13)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="14" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Clean out car">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="14" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Clean out car
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(14)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(14)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(14)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="15" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Draw and color a Mandala">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="15" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Draw and color a Mandala
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(15)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(15)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(15)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="16" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Create a cookbook with favorite recipes">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="16" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors todo-completed-text font-normal">
+                Create a cookbook with favorite recipes
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(16)" title="Click to mark Pending" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(16)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(16)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr><tr class="row-transition hover:bg-slate-50/70 border-b border-slate-100 ">
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input type="checkbox" data-id="17" class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0" aria-label="Select Bake a pie with some friends">
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span data-id="17" class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors text-slate-800 font-normal hover:text-slate-950">
+                Bake a pie with some friends
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            <button onclick="toggleStatus(17)" title="Click to mark Completed" class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button onclick="editTodoPrompt(17)" title="Edit task" class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+                </svg>
+              </button>
+              <button onclick="deleteTodo(17)" title="Delete task" class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr></tbody>
+</table>
+</div>
+<!-- Empty state container (if all deleted) -->
+<div class="py-16 text-center hidden" id="empty-state">
+<svg class="mx-auto h-10 w-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+<p class="text-slate-500 text-sm">No tasks in your list yet.</p>
+</div>
+</section>
+<!-- END: TodoTableContainer -->
+<!-- BEGIN: Footer -->
+<footer class="mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 px-2 gap-2" data-purpose="app-footer">
+<div id="footer-stats"><span class="font-medium text-slate-500">17 tasks total</span> <span class="mx-1 text-slate-300">•</span> <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>8 completed</span></div>
+<div class="flex items-center gap-4">
+<span class="">Click checkbox to select or manage bulk state</span>
+</div>
+</footer>
+<!-- END: Footer -->
+</main>
+<!-- END: MainContainer -->
+<!-- BEGIN: InteractiveScript -->
+<script data-purpose="todo-interactions">
+    // Sample tasks directly reflected from reference screenshot images
+    const initialTasks = [
+      { id: 1, title: 'Watch a documentary', status: 'Pending', selected: false },
+      { id: 2, title: 'Invest in cryptocurrency', status: 'Pending', selected: false },
+      { id: 3, title: 'Contribute code or a monetary donation to an open-source software project', status: 'Pending', selected: false },
+      { id: 4, title: "Solve a Rubik's cube", status: 'Completed', selected: false },
+      { id: 5, title: 'Bake pastries for yourself and neighbor', status: 'Completed', selected: false },
+      { id: 6, title: 'Go see a Broadway production', status: 'Pending', selected: false },
+      { id: 7, title: 'Write a thank you letter to an influential person in your life', status: 'Completed', selected: false },
+      { id: 8, title: 'Invite some friends over for a game night', status: 'Pending', selected: false },
+      { id: 9, title: 'Have a football scrimmage with some friends', status: 'Pending', selected: false },
+      { id: 10, title: "Text a friend you haven't talked to in a long time", status: 'Completed', selected: false },
+      { id: 11, title: 'Organize pantry', status: 'Pending', selected: false },
+      { id: 12, title: 'Buy a new house decoration', status: 'Completed', selected: false },
+      { id: 13, title: "Plan a vacation you've always wanted to take", status: 'Completed', selected: false },
+      { id: 14, title: 'Clean out car', status: 'Pending', selected: false },
+      { id: 15, title: 'Draw and color a Mandala', status: 'Completed', selected: false },
+      { id: 16, title: 'Create a cookbook with favorite recipes', status: 'Completed', selected: false },
+      { id: 17, title: 'Bake a pie with some friends', status: 'Pending', selected: false }
+    ];
+
+    let todos = [...initialTasks];
+
+    // DOM Elements
+    const tbody = document.getElementById('todos-tbody');
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    const bulkActionBar = document.getElementById('bulk-action-bar');
+    const selectedCountBadge = document.getElementById('selected-count-badge');
+    const emptyState = document.getElementById('empty-state');
+    const footerStats = document.getElementById('footer-stats');
+    
+    const inlineAddContainer = document.getElementById('inline-add-container');
+    const openAddModalBtn = document.getElementById('open-add-modal-btn');
+    const cancelAddBtn = document.getElementById('cancel-add-btn');
+    const addTodoForm = document.getElementById('add-todo-form');
+    const newTodoTitle = document.getElementById('new-todo-title');
+    const newTodoStatus = document.getElementById('new-todo-status');
+
+    // Bulk buttons
+    const bulkMarkComplete = document.getElementById('bulk-mark-complete');
+    const bulkMarkIncomplete = document.getElementById('bulk-mark-incomplete');
+    const bulkDelete = document.getElementById('bulk-delete');
+
+    // Render Table
+    function renderTodos() {
+      tbody.innerHTML = '';
+
+      if (todos.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      todos.forEach((todo) => {
+        const tr = document.createElement('tr');
+        tr.className = `row-transition hover:bg-slate-50/70 border-b border-slate-100 ${todo.selected ? 'bg-slate-50/90' : ''}`;
+        
+        const isCompleted = todo.status === 'Completed';
+
+        tr.innerHTML = `
+          <!-- Checkbox Cell -->
+          <td class="px-4 py-3.5 text-center align-middle">
+            <input 
+              type="checkbox" 
+              data-id="${todo.id}"
+              class="custom-checkbox item-checkbox w-4 h-4 text-neutral-900 border-slate-300 rounded focus:ring-0 focus:ring-offset-0"
+              ${todo.selected ? 'checked' : ''}
+              aria-label="Select ${todo.title}"
+            />
+          </td>
+
+          <!-- Title Cell -->
+          <td class="py-3.5 px-3 align-middle">
+            <div class="flex items-center gap-2">
+              <span 
+                data-id="${todo.id}" 
+                class="todo-title text-[13.5px] leading-snug cursor-pointer select-none transition-colors ${
+                  isCompleted ? 'todo-completed-text font-normal' : 'text-slate-800 font-normal hover:text-slate-950'
+                }">
+                ${escapeHtml(todo.title)}
+              </span>
+            </div>
+          </td>
+
+          <!-- Status Cell -->
+          <td class="py-3.5 px-4 align-middle text-center">
+            ${
+              isCompleted
+                ? `<button 
+                    onclick="toggleStatus(${todo.id})"
+                    title="Click to mark Pending" 
+                    class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white tracking-wide shadow-sm hover:opacity-90">
+                    Completed
+                  </button>`
+                : `<button 
+                    onclick="toggleStatus(${todo.id})"
+                    title="Click to mark Completed" 
+                    class="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Pending
+                  </button>`
+            }
+          </td>
+
+          <!-- Actions Cell -->
+          <td class="py-3.5 px-4 align-middle text-right pr-6">
+            <div class="inline-flex items-center justify-end gap-1.5 text-slate-400">
+              <button 
+                onclick="editTodoPrompt(${todo.id})" 
+                title="Edit task"
+                class="p-1 hover:text-slate-700 rounded transition-colors hover:bg-slate-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                </svg>
+              </button>
+              <button 
+                onclick="deleteTodo(${todo.id})" 
+                title="Delete task"
+                class="p-1 hover:text-red-600 rounded transition-colors hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      updateSelectionUi();
+      updateFooterStats();
+    }
+
+    // Helper: Escaping HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Selection State Management
+    function updateSelectionUi() {
+      const selectedTodos = todos.filter(t => t.selected);
+      const total = todos.length;
+      const selectedCount = selectedTodos.length;
+
+      if (selectedCount > 0) {
+        bulkActionBar.classList.remove('hidden');
+        selectedCountBadge.textContent = `${selectedCount} selected`;
+      } else {
+        bulkActionBar.classList.add('hidden');
+      }
+
+      if (total > 0 && selectedCount === total) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+      } else if (selectedCount > 0 && selectedCount < total) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+      } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      }
+    }
+
+    function updateFooterStats() {
+      const completedCount = todos.filter(t => t.status === 'Completed').length;
+      footerStats.textContent = `${todos.length} tasks total • ${completedCount} completed`;
+    }
+
+    // Toggle single status
+    window.toggleStatus = function(id) {
+      todos = todos.map(todo => {
+        if (todo.id === id) {
+          return {
+            ...todo,
+            status: todo.status === 'Completed' ? 'Pending' : 'Completed'
+          };
+        }
+        return todo;
+      });
+      renderTodos();
+    };
+
+    // Edit prompt
+    window.editTodoPrompt = function(id) {
+      const target = todos.find(t => t.id === id);
+      if (!target) return;
+      const newTitle = prompt('Edit task title:', target.title);
+      if (newTitle !== null && newTitle.trim() !== '') {
+        target.title = newTitle.trim();
+        renderTodos();
+      }
+    };
+
+    // Delete single
+    window.deleteTodo = function(id) {
+      todos = todos.filter(t => t.id !== id);
+      renderTodos();
+    };
+
+    // Events: Row checkboxes
+    tbody.addEventListener('change', (e) => {
+      if (e.target.classList.contains('item-checkbox')) {
+        const id = parseInt(e.target.getAttribute('data-id'), 10);
+        const todo = todos.find(t => t.id === id);
+        if (todo) {
+          todo.selected = e.target.checked;
+        }
+        updateSelectionUi();
+        // Update row highlight
+        const row = e.target.closest('tr');
+        if (e.target.checked) {
+          row.classList.add('bg-slate-50/90');
+        } else {
+          row.classList.remove('bg-slate-50/90');
+        }
+      }
+    });
+
+    // Toggle Status when clicking title
+    tbody.addEventListener('click', (e) => {
+      if (e.target.classList.contains('todo-title')) {
+        const id = parseInt(e.target.getAttribute('data-id'), 10);
+        window.toggleStatus(id);
+      }
+    });
+
+    // Select all handler
+    selectAllCheckbox.addEventListener('change', () => {
+      const isChecked = selectAllCheckbox.checked;
+      todos.forEach(t => t.selected = isChecked);
+      renderTodos();
+    });
+
+    // Bulk actions
+    bulkMarkComplete.addEventListener('click', () => {
+      todos.forEach(t => {
+        if (t.selected) t.status = 'Completed';
+      });
+      renderTodos();
+    });
+
+    bulkMarkIncomplete.addEventListener('click', () => {
+      todos.forEach(t => {
+        if (t.selected) t.status = 'Pending';
+      });
+      renderTodos();
+    });
+
+    bulkDelete.addEventListener('click', () => {
+      todos = todos.filter(t => !t.selected);
+      renderTodos();
+    });
+
+    // Toggle add modal / inline drawer
+    openAddModalBtn.addEventListener('click', () => {
+      inlineAddContainer.classList.toggle('hidden');
+      if (!inlineAddContainer.classList.contains('hidden')) {
+        newTodoTitle.focus();
+      }
+    });
+
+    cancelAddBtn.addEventListener('click', () => {
+      inlineAddContainer.classList.add('hidden');
+      newTodoTitle.value = '';
+    });
+
+    // Add Todo Form Submit
+    addTodoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = newTodoTitle.value.trim();
+      if (!val) return;
+
+      const newEntry = {
+        id: Date.now(),
+        title: val,
+        status: newTodoStatus.value,
+        selected: false
+      };
+
+      todos.unshift(newEntry);
+      newTodoTitle.value = '';
+      inlineAddContainer.classList.add('hidden');
+      renderTodos();
+    });
+
+    // Initial render
+    renderTodos();
+  </script>
+<!-- END: InteractiveScript -->
+
+
+</body></html>
