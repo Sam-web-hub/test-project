@@ -1,12 +1,7 @@
 "use client";
 
 import { CheckCircleIcon, TrashIcon, Undo2Icon, Loader2Icon } from "lucide-react";
-
-interface BulkActionBarProps {
-  count: number;
-  isProcessing?: boolean;
-  onBulkAction: (action: "delete" | "complete" | "incomplete") => void;
-}
+import type { BulkActionBarProps } from "@/lib/types";
 
 export function BulkActionBar({
   count,

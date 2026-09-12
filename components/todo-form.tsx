@@ -3,13 +3,7 @@
 import { useState, useRef } from "react";
 import { PlusIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
-import type { Todo } from "@/lib/types";
-
-interface TodoFormProps {
-  onAdd: (todo: Todo) => void;
-  disabled?: boolean;
-  onCancel?: () => void;
-}
+import type { TodoFormProps } from "@/lib/types";
 
 export function TodoForm({ onAdd, disabled = false }: TodoFormProps) {
   const [text, setText] = useState("");

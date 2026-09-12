@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-
-interface BulkActionRunnerProps {
-  ids: number[];
-  action: "delete" | "complete" | "incomplete";
-  onComplete: () => void;
-  onProcessed: (id: number) => void;
-}
+import type { BulkActionRunnerProps } from "@/lib/types";
 
 export function BulkActionRunner({
   ids,

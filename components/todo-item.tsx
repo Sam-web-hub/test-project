@@ -7,18 +7,7 @@ import { Input } from "@/components/ui/input";
 import { PencilIcon, TrashIcon, CheckIcon, XIcon, Loader2Icon } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import type { Todo } from "@/lib/types";
-
-interface TodoItemProps {
-  todo: Todo;
-  selected: boolean;
-  leaving?: boolean;
-  disabled?: boolean;
-  onSelect: (id: number, checked: boolean) => void;
-  onUpdate: (todo: Todo) => void;
-  onDelete: (id: number) => void;
-  onProcessingChange?: (id: number, isProcessing: boolean) => void;
-}
+import type { TodoItemProps } from "@/lib/types";
 
 export function TodoItem({
   todo,

@@ -8,11 +8,7 @@ import { BulkActionBar } from "@/components/bulk-action-bar";
 import { BulkActionRunner } from "@/components/bulk-action-runner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import type { Todo } from "@/lib/types";
-
-interface TodoListProps {
-  initialTodos?: Todo[];
-}
+import type { Todo, TodoListProps, BulkAction, BulkActionType } from "@/lib/types";
 
 export function TodoList({ initialTodos }: TodoListProps) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos ?? []);
@@ -20,9 +16,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [leavingIds, setLeavingIds] = useState<Set<number>>(new Set());
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
-  const [bulkAction, setBulkAction] = useState<
-    { action: "delete" | "complete" | "incomplete"; ids: number[] } | null
-  >(null);
+  const [bulkAction, setBulkAction] = useState<BulkAction | null>(null);
 
   useEffect(() => {
     if (!initialTodos) {
@@ -96,7 +90,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
     setTodos((prev) => [todo, ...prev]);
   }
 
-  function handleBulkAction(action: "delete" | "complete" | "incomplete") {
+  function handleBulkAction(action: BulkActionType) {
     const ids = Array.from(selectedIds);
     setBulkAction({ action, ids });
   }
