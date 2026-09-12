@@ -1,32 +1,45 @@
 "use client";
 
-import { CheckCircleIcon, TrashIcon, Undo2Icon } from "lucide-react";
+import { CheckCircleIcon, TrashIcon, Undo2Icon, Loader2Icon } from "lucide-react";
 
 interface BulkActionBarProps {
   count: number;
+  isProcessing?: boolean;
   onBulkAction: (action: "delete" | "complete" | "incomplete") => void;
 }
 
-export function BulkActionBar({ count, onBulkAction }: BulkActionBarProps) {
-  const isActive = count > 0;
+export function BulkActionBar({
+  count,
+  isProcessing = false,
+  onBulkAction,
+}: BulkActionBarProps) {
+  const isActive = count > 0 && !isProcessing;
 
   return (
     <section
       className={`border rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 transition-all duration-200 overflow-x-auto no-scrollbar ${
         isActive
           ? "border-slate-200/90 bg-white/95 backdrop-blur-sm shadow-sm"
+          : isProcessing
+          ? "border-indigo-200/80 bg-indigo-50/40 backdrop-blur-sm shadow-xs"
           : "border-slate-200/60 bg-white/60 backdrop-blur-xs shadow-xs"
       }`}
     >
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <span
-          className={`text-[11px] sm:text-xs font-semibold px-2 sm:px-2.5 py-1 rounded-md transition-colors duration-150 whitespace-nowrap ${
-            isActive
+          className={`text-[11px] sm:text-xs font-semibold px-2 sm:px-2.5 py-1 rounded-md transition-colors duration-150 whitespace-nowrap flex items-center gap-1.5 ${
+            isProcessing
+              ? "bg-indigo-100/80 text-indigo-800 border border-indigo-300/80"
+              : count > 0
               ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
               : "bg-slate-100 text-slate-400 border border-slate-200/70"
           }`}
         >
-          {count} <span className="hidden sm:inline">selected</span>
+          {isProcessing && <Loader2Icon className="w-3 h-3 animate-spin text-indigo-600 shrink-0" />}
+          <span>
+            {count} <span className="hidden sm:inline">selected</span>
+            {isProcessing && <span className="hidden sm:inline"> (processing...)</span>}
+          </span>
         </span>
       </div>
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">

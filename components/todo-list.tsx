@@ -19,6 +19,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
   const [loading, setLoading] = useState(!initialTodos);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [leavingIds, setLeavingIds] = useState<Set<number>>(new Set());
+  const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [bulkAction, setBulkAction] = useState<
     { action: "delete" | "complete" | "incomplete"; ids: number[] } | null
   >(null);
@@ -48,7 +49,19 @@ export function TodoList({ initialTodos }: TodoListProps) {
     }
   }, [initialTodos]);
 
+  function handleProcessingChange(id: number, isProcessing: boolean) {
+    setProcessingIds((prev) => {
+      const next = new Set(prev);
+      if (isProcessing) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  const isProcessing = bulkAction !== null || processingIds.size > 0;
+
   function handleSelect(id: number, checked: boolean) {
+    if (isProcessing) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) next.add(id);
@@ -58,6 +71,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
   }
 
   function handleSelectAll(checked: boolean) {
+    if (isProcessing) return;
     if (checked) {
       setSelectedIds(new Set(todos.map((t) => t.id)));
     } else {
@@ -153,11 +167,12 @@ export function TodoList({ initialTodos }: TodoListProps) {
           {/* Bulk Action Bar */}
           <BulkActionBar
             count={selectedIds.size}
+            isProcessing={isProcessing}
             onBulkAction={handleBulkAction}
           />
 
           {/* Add Form */}
-          <TodoForm onAdd={handleAdd} />
+          <TodoForm onAdd={handleAdd} disabled={isProcessing} />
         </div>
 
       {bulkAction && (
@@ -178,6 +193,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
                 <th className="w-10 sm:w-12 px-2 sm:px-4 py-3 text-center" scope="col">
                   <Checkbox
                     checked={allSelected}
+                    disabled={isProcessing || loading || todos.length === 0}
                     onCheckedChange={(checked) => handleSelectAll(!!checked)}
                     aria-label="Select all todos"
                   />
@@ -212,9 +228,11 @@ export function TodoList({ initialTodos }: TodoListProps) {
                     todo={todo}
                     selected={selectedIds.has(todo.id)}
                     leaving={leavingIds.has(todo.id)}
+                    disabled={isProcessing}
                     onSelect={handleSelect}
                     onUpdate={handleUpdate}
                     onDelete={handleDelete}
+                    onProcessingChange={handleProcessingChange}
                   />
                 ))
               )}
