@@ -13,6 +13,7 @@ export function BulkActionBar({
   isProcessing = false,
   onBulkAction,
 }: BulkActionBarProps) {
+  const displayCount = isProcessing && count === 0 ? 1 : count;
   const isActive = count > 0 && !isProcessing;
 
   return (
@@ -37,7 +38,7 @@ export function BulkActionBar({
         >
           {isProcessing && <Loader2Icon className="w-3 h-3 animate-spin text-indigo-600 shrink-0" />}
           <span>
-            {count} <span className="hidden sm:inline">selected</span>
+            {displayCount} <span className="hidden sm:inline">selected</span>
             {isProcessing && <span className="hidden sm:inline"> (processing...)</span>}
           </span>
         </span>

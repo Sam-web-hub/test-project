@@ -166,7 +166,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
 
           {/* Bulk Action Bar */}
           <BulkActionBar
-            count={selectedIds.size}
+            count={selectedIds.size > 0 ? selectedIds.size : (isProcessing ? Math.max(1, processingIds.size) : 0)}
             isProcessing={isProcessing}
             onBulkAction={handleBulkAction}
           />
