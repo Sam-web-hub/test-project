@@ -1,27 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TodoItem } from "@/components/todo-item";
 import { TodoForm } from "@/components/todo-form";
 import { BulkActionBar } from "@/components/bulk-action-bar";
 import { BulkActionRunner } from "@/components/bulk-action-runner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { PlusIcon } from "lucide-react";
+import { toast } from "sonner";
 import type { Todo } from "@/lib/types";
 
 interface TodoListProps {
-  initialTodos: Todo[];
+  initialTodos?: Todo[];
 }
 
 export function TodoList({ initialTodos }: TodoListProps) {
-  const [todos, setTodos] = useState<Todo[]>(initialTodos);
+  const [todos, setTodos] = useState<Todo[]>(initialTodos ?? []);
+  const [loading, setLoading] = useState(!initialTodos);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [leavingIds, setLeavingIds] = useState<Set<number>>(new Set());
-  const [isAdding, setIsAdding] = useState(false);
   const [bulkAction, setBulkAction] = useState<
     { action: "delete" | "complete" | "incomplete"; ids: number[] } | null
   >(null);
+
+  useEffect(() => {
+    if (!initialTodos) {
+      fetch("/api/todos")
+        .then(async (res) => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP error ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setTodos(data);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch todos:", err);
+          toast.error("Failed to load todos from server");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [initialTodos]);
 
   function handleSelect(id: number, checked: boolean) {
     setSelectedIds((prev) => {
@@ -114,7 +139,7 @@ export function TodoList({ initialTodos }: TodoListProps) {
   return (
     <TooltipProvider delay={150}>
       <div className="space-y-4">
-        {/* Sticky Header & Bulk Bar */}
+        {/* Sticky Header, Bulk Bar & Add Form */}
         <div className="sticky top-0 z-30 bg-[#fafafa]/95 backdrop-blur-md pt-3 pb-2.5 space-y-3" data-purpose="sticky-top-section">
           <header className="flex items-center justify-between" data-purpose="header-section">
             <div className="flex items-center gap-3">
@@ -123,14 +148,6 @@ export function TodoList({ initialTodos }: TodoListProps) {
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 shadow-sm shadow-indigo-300"></span>
               </h1>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsAdding((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-98 text-white text-xs sm:text-sm font-medium rounded-lg shadow-sm shadow-indigo-200 transition-all duration-150 ease-in-out cursor-pointer shrink-0"
-            >
-              <PlusIcon className="w-4 h-4" />
-              <span>{isAdding ? "Close" : "Add Todo"}</span>
-            </button>
           </header>
 
           {/* Bulk Action Bar */}
@@ -138,18 +155,10 @@ export function TodoList({ initialTodos }: TodoListProps) {
             count={selectedIds.size}
             onBulkAction={handleBulkAction}
           />
-        </div>
 
-        {/* Inline Add Form */}
-        {isAdding && (
-          <TodoForm
-            onAdd={(todo) => {
-              handleAdd(todo);
-              setIsAdding(false);
-            }}
-            onCancel={() => setIsAdding(false)}
-          />
-        )}
+          {/* Add Form */}
+          <TodoForm onAdd={handleAdd} />
+        </div>
 
       {bulkAction && (
         <BulkActionRunner
@@ -179,23 +188,42 @@ export function TodoList({ initialTodos }: TodoListProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm" id="todos-tbody">
-              {todos.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  selected={selectedIds.has(todo.id)}
-                  leaving={leavingIds.has(todo.id)}
-                  onSelect={handleSelect}
-                  onUpdate={handleUpdate}
-                  onDelete={handleDelete}
-                />
-              ))}
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-2 sm:px-4 py-3.5 text-center w-10 sm:w-12">
+                      <div className="w-4 h-4 rounded bg-slate-200 mx-auto" />
+                    </td>
+                    <td className="py-3.5 px-2 sm:px-3">
+                      <div className="h-4 bg-slate-200 rounded w-3/4 max-w-sm" />
+                    </td>
+                    <td className="py-3.5 px-1 sm:px-4 w-24 sm:w-32 text-center">
+                      <div className="h-5 bg-slate-200 rounded-full w-16 mx-auto" />
+                    </td>
+                    <td className="py-3.5 px-2 sm:px-4 w-18 sm:w-24 text-right pr-3 sm:pr-6">
+                      <div className="h-4 bg-slate-200 rounded w-10 ml-auto" />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                todos.map((todo) => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    selected={selectedIds.has(todo.id)}
+                    leaving={leavingIds.has(todo.id)}
+                    onSelect={handleSelect}
+                    onUpdate={handleUpdate}
+                    onDelete={handleDelete}
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Empty state */}
-        {todos.length === 0 && (
+        {!loading && todos.length === 0 && (
           <div className="py-16 text-center" id="empty-state">
             <svg
               className="mx-auto h-10 w-10 text-slate-300 mb-3"
@@ -218,12 +246,18 @@ export function TodoList({ initialTodos }: TodoListProps) {
       {/* App Footer */}
       <footer className="mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 px-2 gap-2" data-purpose="app-footer">
         <div id="footer-stats" className="flex items-center gap-1.5">
-          <span className="font-medium text-slate-500">{todos.length} tasks total</span>
-          <span className="mx-1 text-slate-300">•</span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200/60">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            {completedCount} completed
+          <span className="font-medium text-slate-500">
+            {loading ? "Loading tasks..." : `${todos.length} tasks total`}
           </span>
+          {!loading && (
+            <>
+              <span className="mx-1 text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                {completedCount} completed
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <span>Click checkbox to select or manage bulk state</span>
