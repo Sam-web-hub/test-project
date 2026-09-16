@@ -18,7 +18,7 @@ import { TodoTable } from "@/components/todo-table";
 export default function Page() {
   return (
     <main className="page">
-      <header className="masthead">
+      <header className="masthead sticky-toolbar">
         <h1>Todos</h1>
       </header>
 

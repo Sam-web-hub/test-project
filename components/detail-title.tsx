@@ -1,17 +1,19 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { CheckIcon, LoaderIcon, PencilIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { MAX_TODO_LENGTH } from "@/lib/constants";
 import { renameTodo } from "@/app/actions";
-import { useSelection } from "./selection";
 import type { ActionState } from "@/lib/types";
 
 const initial: ActionState = { ok: true };
 
-export function RowText({
+/**
+ * Client leaf component. Only handles title display and inline editing
+ * on the detail page, keeping the surrounding card chrome server-rendered.
+ */
+export function DetailTitle({
     id,
     text,
     completed,
@@ -23,10 +25,8 @@ export function RowText({
     const [editing, setEditing] = useState(false);
     const [state, formAction, pending] = useActionState(renameTodo, initial);
     const inputRef = useRef<HTMLInputElement>(null);
-    const { busy } = useSelection();
 
     const [prevNonce, setPrevNonce] = useState(state.nonce);
-
     if (state.nonce !== prevNonce) {
         setPrevNonce(state.nonce);
         if (state.ok) {
@@ -41,25 +41,22 @@ export function RowText({
     }, [state.nonce, state.ok]);
 
     useEffect(() => {
-        if (editing) inputRef.current?.select();
+        if (editing) {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+        }
     }, [editing]);
 
     if (!editing) {
         return (
-            <div className="text-cell">
-                <Link
-                    href={`/todos/${id}`}
-                    className="text text-link"
-                    data-done={completed || undefined}
-                    title={text}
-                >
+            <div className="detail-title-row">
+                <h1 className="detail-title" data-done={completed || undefined}>
                     {text}
-                </Link>
+                </h1>
                 <button
                     type="button"
                     className="icon-button"
                     onClick={() => setEditing(true)}
-                    disabled={busy}
                     aria-label={`Edit "${text}"`}
                 >
                     <PencilIcon aria-hidden />
@@ -69,7 +66,7 @@ export function RowText({
     }
 
     return (
-        <form action={formAction} className="text-cell">
+        <form action={formAction} className="detail-edit-form">
             <input type="hidden" name="id" value={id} />
             <input
                 ref={inputRef}
@@ -77,26 +74,33 @@ export function RowText({
                 defaultValue={text}
                 maxLength={MAX_TODO_LENGTH}
                 disabled={pending}
-                className="input"
+                className="input input-lg"
                 aria-invalid={state.ok ? undefined : true}
                 aria-label="Todo text"
                 onKeyDown={(e) => {
                     if (e.key === "Escape") setEditing(false);
                 }}
             />
-            <button type="submit" className="icon-button" disabled={pending} aria-label="Save changes">
-                {pending ? <LoaderIcon className="spin" aria-hidden /> : <CheckIcon aria-hidden />}
-            </button>
-            <button
-                type="button"
-                className="icon-button"
-                onClick={() => setEditing(false)}
-                disabled={pending}
-                aria-label="Cancel editing"
-            >
-                <XIcon aria-hidden />
-            </button>
-            {state.error ? <p className="field-error">{state.error}</p> : null}
+            <div className="detail-edit-actions">
+                <button type="submit" className="button" disabled={pending}>
+                    {pending ? <LoaderIcon className="spin" aria-hidden /> : <CheckIcon aria-hidden />}
+                    Save
+                </button>
+                <button
+                    type="button"
+                    className="button ghost"
+                    onClick={() => setEditing(false)}
+                    disabled={pending}
+                >
+                    <XIcon aria-hidden />
+                    Cancel
+                </button>
+            </div>
+            {state.error ? (
+                <p className="field-error" role="alert">
+                    {state.error}
+                </p>
+            ) : null}
         </form>
     );
 }

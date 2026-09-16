@@ -15,6 +15,7 @@ type SelectionValue = {
     selected: number[];
     isSelected: (id: number) => boolean;
     toggle: (id: number) => void;
+    deselect: (id: number) => void;
     clear: () => void;
     phase: (id: number) => RowPhase;
     setPhase: (id: number, phase: RowPhase) => void;
@@ -45,6 +46,22 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
         );
     }, []);
 
+    const deselect = useCallback((id: number) => {
+        setSelected((prev) => prev.filter((x) => x !== id));
+        setPhases((prev) => {
+            if (!(id in prev)) return prev;
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+        setCompletedById((prev) => {
+            if (!(id in prev)) return prev;
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+    }, []);
+
     const clear = useCallback(() => {
         setSelected([]);
         setPhases({});
@@ -68,6 +85,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
             selected,
             isSelected: (id) => selected.includes(id),
             toggle,
+            deselect,
             clear,
             phase: (id) => phases[id] ?? "idle",
             setPhase,
@@ -82,6 +100,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
             busy,
             allSelectedCompleted,
             toggle,
+            deselect,
             clear,
             setPhase,
             setCompletedFor,
@@ -99,4 +118,8 @@ export function useSelection() {
     const ctx = useContext(SelectionContext);
     if (!ctx) throw new Error("useSelection must be used inside SelectionProvider");
     return ctx;
+}
+
+export function useOptionalSelection() {
+    return useContext(SelectionContext);
 }

@@ -7,8 +7,8 @@ export function SelectAll({ ids }: { ids: number[] }) {
     const { selected, toggle, clear, busy } = useSelection();
     const ref = useRef<HTMLInputElement>(null);
 
-    const all = ids.length > 0 && selected.length === ids.length;
-    const some = selected.length > 0 && !all;
+    const all = ids.length > 0 && ids.every((id) => selected.includes(id));
+    const some = selected.some((id) => ids.includes(id)) && !all;
 
     useEffect(() => {
         if (ref.current) ref.current.indeterminate = some;

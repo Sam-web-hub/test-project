@@ -54,6 +54,11 @@ export async function listTodos(): Promise<Todo[]> {
     return [...map.values()].sort((a, b) => a.id - b.id);
 }
 
+export async function getTodo(id: number): Promise<Todo | null> {
+    const map = await db();
+    return map.get(id) ?? null;
+}
+
 export async function insertTodo(text: string): Promise<Todo> {
     const map = await db();
     const todo: Todo = { id: nextId++, todo: text, completed: false, userId: 1 };

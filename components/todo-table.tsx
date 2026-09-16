@@ -2,7 +2,7 @@ import { listTodos } from "@/lib/store";
 import { RowDelete } from "./row-delete";
 import { RowSelect } from "./row-select";
 import { RowShell } from "./row-shell";
-import { RowStatus } from "./row-status";
+import { StatusToggle } from "./status-toggle";
 import { RowText } from "./row-text";
 import { SelectAll } from "./select-all";
 
@@ -54,7 +54,7 @@ export async function TodoTable() {
                             <RowText id={todo.id} text={todo.todo} completed={todo.completed} />
                         </td>
                         <td className="col-status">
-                            <RowStatus id={todo.id} completed={todo.completed} label={todo.todo} />
+                            <StatusToggle id={todo.id} completed={todo.completed} label={todo.todo} />
                         </td>
                         <td className="col-actions">
                             <RowDelete id={todo.id} label={todo.todo} />

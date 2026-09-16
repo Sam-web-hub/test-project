@@ -4,14 +4,14 @@ import { useOptimistic, useTransition } from "react";
 import { LoaderIcon } from "lucide-react";
 import { toast } from "sonner";
 import { setCompleted } from "@/app/actions";
-import { useSelection } from "./selection";
+import { useOptionalSelection } from "./selection";
 
 /**
- * Replaces the old click-to-toggle <span>: a real button, so it is focusable
- * and keyboard-operable. useOptimistic replaces the per-row `loading` flag
- * that used to be threaded down from TodoList.
+ * Universal status toggle button.
+ * Works in table rows (respecting selection busy state) and on detail cards.
+ * Uses useOptimistic for immediate state feedback before the server action settles.
  */
-export function RowStatus({
+export function StatusToggle({
     id,
     completed,
     label,
@@ -22,7 +22,8 @@ export function RowStatus({
 }) {
     const [optimistic, setOptimistic] = useOptimistic(completed);
     const [pending, startTransition] = useTransition();
-    const { busy } = useSelection();
+    const selection = useOptionalSelection();
+    const busy = selection?.busy ?? false;
 
     function onToggle() {
         startTransition(async () => {
@@ -52,3 +53,6 @@ export function RowStatus({
         </button>
     );
 }
+
+// Backwards compatibility alias
+export { StatusToggle as RowStatus };

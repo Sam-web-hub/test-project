@@ -40,6 +40,7 @@ export async function renameTodo(
     if (!updated) return { ok: false, error: "That todo no longer exists." };
 
     revalidatePath("/");
+    revalidatePath(`/todos/${id}`);
     return { ok: true, nonce: Date.now() };
 }
 
@@ -47,12 +48,14 @@ export async function setCompleted(id: number, completed: boolean) {
     const updated = await patchTodo(id, { completed });
     if (!updated) throw new Error("That todo no longer exists.");
     revalidatePath("/");
+    revalidatePath(`/todos/${id}`);
 }
 
 export async function deleteTodo(id: number) {
     const removed = await removeTodo(id);
     if (!removed) throw new Error("That todo no longer exists.");
     revalidatePath("/");
+    revalidatePath(`/todos/${id}`);
 }
 
 /**

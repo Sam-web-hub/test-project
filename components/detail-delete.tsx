@@ -1,24 +1,26 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { LoaderIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteTodo } from "@/app/actions";
-import { useSelection } from "./selection";
 
-export function RowDelete({ id, label }: { id: number; label: string }) {
+/**
+ * Client leaf component. Provides frictionless deletion with loading state
+ * and redirection back to the main list.
+ */
+export function DetailDelete({ id, label }: { id: number; label: string }) {
+    const router = useRouter();
     const [pending, startTransition] = useTransition();
-    const { setPhase, deselect, busy } = useSelection();
 
     function onDelete() {
         startTransition(async () => {
-            setPhase(id, "working");
             try {
                 await deleteTodo(id);
-                deselect(id);
                 toast.success("Todo deleted");
+                router.push("/");
             } catch (error) {
-                setPhase(id, "failed");
                 toast.error(
                     error instanceof Error ? error.message : "Could not delete that todo.",
                 );
@@ -29,12 +31,13 @@ export function RowDelete({ id, label }: { id: number; label: string }) {
     return (
         <button
             type="button"
-            className="icon-button danger"
+            className="button ghost danger"
             onClick={onDelete}
-            disabled={pending || busy}
+            disabled={pending}
             aria-label={`Delete "${label}"`}
         >
             {pending ? <LoaderIcon className="spin" aria-hidden /> : <Trash2Icon aria-hidden />}
+            Delete
         </button>
     );
 }
