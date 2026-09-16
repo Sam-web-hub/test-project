@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { LoaderIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteTodo } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import { useSelection } from "./selection";
 
 export function RowDelete({ id, label }: { id: number; label: string }) {
@@ -27,14 +28,20 @@ export function RowDelete({ id, label }: { id: number; label: string }) {
     }
 
     return (
-        <button
+        <Button
             type="button"
-            className="icon-button danger"
+            variant="rowIconDanger"
+            size="icon-sm"
             onClick={onDelete}
             disabled={pending || busy}
             aria-label={`Delete "${label}"`}
+            title="Delete task"
         >
-            {pending ? <LoaderIcon className="spin" aria-hidden /> : <Trash2Icon aria-hidden />}
-        </button>
+            {pending ? (
+                <LoaderIcon className="size-4 animate-spin" aria-hidden />
+            ) : (
+                <Trash2Icon className="size-4" aria-hidden />
+            )}
+        </Button>
     );
 }

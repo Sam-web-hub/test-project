@@ -4,11 +4,13 @@ import { useOptimistic, useTransition } from "react";
 import { LoaderIcon } from "lucide-react";
 import { toast } from "sonner";
 import { setCompleted } from "@/app/actions";
+import { badgeVariants } from "@/components/ui/badge";
+import { cn } from "cn";
 import { useOptionalSelection } from "./selection";
 
 /**
- * Universal status toggle button.
- * Works in table rows (respecting selection busy state) and on detail cards.
+ * Universal status toggle pill.
+ * Renders as an interactive Shadcn Badge using CVA variants 'completed' (emerald) and 'pending' (amber).
  * Uses useOptimistic for immediate state feedback before the server action settles.
  */
 export function StatusToggle({
@@ -21,7 +23,7 @@ export function StatusToggle({
     label: string;
 }) {
     const [optimistic, setOptimistic] = useOptimistic(completed);
-    const [pending, startTransition] = useTransition();
+    const [isPending, startTransition] = useTransition();
     const selection = useOptionalSelection();
     const busy = selection?.busy ?? false;
 
@@ -38,18 +40,25 @@ export function StatusToggle({
         });
     }
 
+    const variant = optimistic ? "completed" : "pending";
+    const statusText = optimistic ? "Completed" : "Pending";
+    const nextText = optimistic ? "pending" : "completed";
+
     return (
         <button
             type="button"
             onClick={onToggle}
-            disabled={pending || busy}
-            className="status"
-            data-done={optimistic || undefined}
+            disabled={isPending || busy}
+            className={cn(
+                badgeVariants({ variant }),
+                "cursor-pointer active:scale-95 disabled:pointer-events-none disabled:opacity-50 select-none",
+            )}
             aria-pressed={optimistic}
-            aria-label={`Mark "${label}" as ${optimistic ? "open" : "done"}`}
+            aria-label={`Mark "${label}" as ${nextText}`}
+            title={`Click to mark ${nextText}`}
         >
-            {pending ? <LoaderIcon className="spin" aria-hidden /> : null}
-            {optimistic ? "Done" : "Open"}
+            {isPending ? <LoaderIcon className="size-3 animate-spin" aria-hidden /> : null}
+            <span>{statusText}</span>
         </button>
     );
 }

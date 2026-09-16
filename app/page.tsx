@@ -6,32 +6,39 @@ import { TodoForm } from "@/components/todo-form";
 import { TodoTable } from "@/components/todo-table";
 
 /**
- * Server Component. The title scrolls away with the page; the add-form and
- * bulk bar are hoisted into one sticky wrapper below it so they're pinned
- * together regardless of how far down the table you've scrolled.
- *
- * BulkBar reads everything from SelectionProvider's context, not from props,
- * so lifting it out of TodoTable and next to TodoForm is a pure move — it
- * just needs SelectionProvider to wrap this whole region now, not only the
- * table.
+ * Server Component.
+ * Styled with Tailwind CSS matching design/screen.png:
+ * Top header with Todos and the glowing violet dot, always-visible add form card,
+ * and adaptive bulk bar wrapping the table.
  */
 export default function Page() {
-  return (
-    <main className="page">
-      <header className="masthead sticky-toolbar">
-        <h1>Todos</h1>
-      </header>
+    return (
+        <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 min-h-screen" data-purpose="todo-application">
+            <header className="flex items-center justify-between mb-5" data-purpose="header-section">
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-semibold text-slate-900 tracking-tight flex items-center gap-2.5">
+                        <span>Todos</span>
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 shadow-sm shadow-indigo-300" aria-hidden="true" />
+                    </h1>
+                </div>
+            </header>
 
-      <SelectionProvider>
-        <div className="sticky-toolbar">
-          <TodoForm />
-          <BulkBar />
-        </div>
+            <SelectionProvider>
+                <div className="sticky top-0 z-10 bg-[#fafafa]/95 backdrop-blur-xs pt-1 pb-1">
+                    <section
+                        className="bg-white border border-slate-200 rounded-xl shadow-sm mb-5 overflow-hidden"
+                        data-purpose="todo-controls-section"
+                        aria-label="Todo form and bulk actions"
+                    >
+                        <TodoForm />
+                        <BulkBar />
+                    </section>
+                </div>
 
-        <Suspense fallback={<TableSkeleton />}>
-          <TodoTable />
-        </Suspense>
-      </SelectionProvider>
-    </main>
-  );
+                <Suspense fallback={<TableSkeleton />}>
+                    <TodoTable />
+                </Suspense>
+            </SelectionProvider>
+        </main>
+    );
 }

@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation";
 import { CheckCheckIcon, Trash2Icon, Undo2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { bulkAction } from "@/app/actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useSelection } from "./selection";
 import type { BulkKind } from "@/lib/types";
 
 /**
- * Always mounted (see page.tsx / sticky-toolbar) — never returns null. With
- * nothing selected the count reads "0 selected" and every action is
- * disabled, rather than the bar disappearing and reappearing as the person
- * checks rows.
+ * Always mounted (see page.tsx) — never returns null.
+ * When nothing is selected, the count reads "0 selected" and actions are disabled.
+ * Uses a single adaptive toggle button with terminology matching the design:
+ * "Mark Complete" / "Mark Incomplete".
  */
 export function BulkBar() {
     const { selected, clear, setPhase, busy, setBusy, allSelectedCompleted } =
@@ -22,10 +24,11 @@ export function BulkBar() {
 
     const empty = selected.length === 0;
 
-    // Adaptive: if everything currently selected is already done, the useful
-    // action is reopening them; otherwise (open, or a mix) it's marking done.
+    // Adaptive single button:
+    // If everything selected is already done, action is "Mark Incomplete"; otherwise "Mark Complete".
     const markKind: BulkKind = allSelectedCompleted ? "incomplete" : "complete";
-    const markLabel = allSelectedCompleted ? "Mark open" : "Mark done";
+    const markLabel = allSelectedCompleted ? "Mark Incomplete" : "Mark Complete";
+    const markVariant = allSelectedCompleted ? "amber" : "emerald";
     const MarkIcon = allSelectedCompleted ? Undo2Icon : CheckCheckIcon;
 
     async function run(kind: BulkKind) {
@@ -38,8 +41,6 @@ export function BulkBar() {
         const failures: number[] = [];
 
         try {
-            // Next turns the async generator Server Action into a stream; this is
-            // the whole client-side reader. No ReadableStream, no NDJSON parsing.
             const stream = await bulkAction(ids, kind);
 
             for await (const update of stream) {
@@ -60,7 +61,7 @@ export function BulkBar() {
 
         const succeeded = ids.length - failures.length;
         const verb =
-            kind === "delete" ? "deleted" : kind === "incomplete" ? "reopened" : "completed";
+            kind === "delete" ? "deleted" : kind === "incomplete" ? "marked incomplete" : "completed";
 
         if (failures.length === 0) {
             toast.success(`${succeeded} ${succeeded === 1 ? "todo" : "todos"} ${verb}`);
@@ -73,42 +74,58 @@ export function BulkBar() {
         setBusy(false);
         startTransition(() => {
             clear();
-            // revalidatePath fires after the stream closes, so refresh explicitly to
-            // pull the re-rendered Server Component tree.
             router.refresh();
         });
     }
 
     return (
-        <div className="bulk-bar" role="region" aria-label="Bulk actions">
-            <p className="bulk-count">{selected.length} selected</p>
-            <div className="bulk-actions">
-                <button
+        <div
+            className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 transition-colors duration-200"
+            role="region"
+            aria-label="Bulk actions"
+            data-purpose="bulk-action-bar"
+        >
+            <div className="flex items-center gap-2">
+                <Badge variant="selected">
+                    {selected.length} selected
+                </Badge>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+                <Button
                     type="button"
-                    className="button ghost"
+                    variant={markVariant}
+                    size="sm"
                     onClick={() => run(markKind)}
                     disabled={empty || busy}
+                    className="gap-1.5 text-xs font-medium"
                 >
-                    <MarkIcon aria-hidden />
-                    {markLabel}
-                </button>
-                <button
+                    <MarkIcon className="size-3.5" aria-hidden />
+                    <span>{markLabel}</span>
+                </Button>
+
+                <Button
                     type="button"
-                    className="button ghost danger"
+                    variant="rose"
+                    size="sm"
                     onClick={() => run("delete")}
                     disabled={empty || busy}
+                    className="gap-1.5 text-xs font-medium"
                 >
-                    <Trash2Icon aria-hidden />
-                    Delete
-                </button>
-                <button
+                    <Trash2Icon className="size-3.5" aria-hidden />
+                    <span>Delete Selected</span>
+                </Button>
+
+                <Button
                     type="button"
-                    className="button quiet"
+                    variant="muted"
+                    size="sm"
                     onClick={clear}
                     disabled={empty || busy}
+                    className="text-xs font-medium"
                 >
                     Clear selection
-                </button>
+                </Button>
             </div>
         </div>
     );

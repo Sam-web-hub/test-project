@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { cn } from "cn";
 import { useSelection } from "./selection";
 
 /**
@@ -20,6 +21,7 @@ export function RowShell({
 }) {
     const { isSelected, phase, setCompletedFor } = useSelection();
     const state = phase(id);
+    const selected = isSelected(id);
 
     useEffect(() => {
         setCompletedFor(id, completed);
@@ -27,9 +29,15 @@ export function RowShell({
 
     return (
         <tr
-            data-selected={isSelected(id) || undefined}
+            data-selected={selected || undefined}
             data-phase={state}
-            className="row"
+            className={cn(
+                "border-b border-slate-100 transition-colors duration-150 ease-in-out",
+                selected ? "bg-slate-50/90" : "hover:bg-slate-50/70",
+                state === "working" && "bg-amber-50/60 shadow-[inset_3px_0_0_#d97706]",
+                state === "done" && "bg-emerald-50/50 opacity-70",
+                state === "failed" && "bg-rose-50/60 shadow-[inset_3px_0_0_#e11d48]",
+            )}
         >
             {children}
         </tr>

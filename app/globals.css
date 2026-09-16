@@ -1,10 +1,8 @@
-/*
-  Plain CSS, no framework. The rule the whole palette follows: chrome is
-  neutral, colour only ever encodes state (open / done / in flight / failed).
-  Swap for Tailwind if you want — the class names map one-to-one.
-*/
+@import "tailwindcss";
 
 :root {
+  --background: #fafafa;
+  --foreground: #0f172a;
   --paper: #f5f6f7;
   --surface: #ffffff;
   --ink: #16181c;

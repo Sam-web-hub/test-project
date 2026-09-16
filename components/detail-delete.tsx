@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LoaderIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteTodo } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 
 /**
  * Client leaf component. Provides frictionless deletion with loading state
@@ -29,15 +30,22 @@ export function DetailDelete({ id, label }: { id: number; label: string }) {
     }
 
     return (
-        <button
+        <Button
             type="button"
-            className="button ghost danger"
+            variant="rose"
+            size="sm"
             onClick={onDelete}
             disabled={pending}
+            className="gap-1.5 text-xs font-medium"
             aria-label={`Delete "${label}"`}
+            title="Delete task"
         >
-            {pending ? <LoaderIcon className="spin" aria-hidden /> : <Trash2Icon aria-hidden />}
-            Delete
-        </button>
+            {pending ? (
+                <LoaderIcon className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+                <Trash2Icon className="size-3.5" aria-hidden />
+            )}
+            <span>Delete</span>
+        </Button>
     );
 }

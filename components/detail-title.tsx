@@ -5,6 +5,9 @@ import { CheckIcon, LoaderIcon, PencilIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { MAX_TODO_LENGTH } from "@/lib/constants";
 import { renameTodo } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "cn";
 import type { ActionState } from "@/lib/types";
 
 const initial: ActionState = { ok: true };
@@ -49,55 +52,64 @@ export function DetailTitle({
 
     if (!editing) {
         return (
-            <div className="detail-title-row">
-                <h1 className="detail-title" data-done={completed || undefined}>
+            <div className="flex items-start justify-between gap-4">
+                <h1
+                    className={cn(
+                        "text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight break-words",
+                        completed && "line-through text-slate-400",
+                    )}
+                >
                     {text}
                 </h1>
-                <button
+                <Button
                     type="button"
-                    className="icon-button"
+                    variant="rowIcon"
+                    size="icon-sm"
                     onClick={() => setEditing(true)}
                     aria-label={`Edit "${text}"`}
+                    title="Edit task title"
                 >
-                    <PencilIcon aria-hidden />
-                </button>
+                    <PencilIcon className="size-4" aria-hidden />
+                </Button>
             </div>
         );
     }
 
     return (
-        <form action={formAction} className="detail-edit-form">
+        <form action={formAction} className="flex flex-col gap-3">
             <input type="hidden" name="id" value={id} />
-            <input
+            <Input
                 ref={inputRef}
                 name="todo"
                 defaultValue={text}
                 maxLength={MAX_TODO_LENGTH}
                 disabled={pending}
-                className="input input-lg"
+                className="w-full text-base border-slate-200 rounded-lg px-3.5 py-2 focus-visible:border-indigo-500 focus-visible:ring-indigo-500/20"
                 aria-invalid={state.ok ? undefined : true}
                 aria-label="Todo text"
                 onKeyDown={(e) => {
                     if (e.key === "Escape") setEditing(false);
                 }}
             />
-            <div className="detail-edit-actions">
-                <button type="submit" className="button" disabled={pending}>
-                    {pending ? <LoaderIcon className="spin" aria-hidden /> : <CheckIcon aria-hidden />}
-                    Save
-                </button>
-                <button
+            <div className="flex items-center gap-2">
+                <Button type="submit" variant="gradient" size="sm" disabled={pending} className="gap-1.5">
+                    {pending ? <LoaderIcon className="size-3.5 animate-spin" aria-hidden /> : <CheckIcon className="size-3.5" aria-hidden />}
+                    <span>Save</span>
+                </Button>
+                <Button
                     type="button"
-                    className="button ghost"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setEditing(false)}
                     disabled={pending}
+                    className="text-slate-500 hover:text-slate-800"
                 >
-                    <XIcon aria-hidden />
-                    Cancel
-                </button>
+                    <XIcon className="size-3.5 mr-1" aria-hidden />
+                    <span>Cancel</span>
+                </Button>
             </div>
             {state.error ? (
-                <p className="field-error" role="alert">
+                <p className="text-xs text-rose-600" role="alert">
                     {state.error}
                 </p>
             ) : null}
