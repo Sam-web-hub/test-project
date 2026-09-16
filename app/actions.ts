@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { BULK_PACE_MS, MAX_TODO_LENGTH } from "@/lib/constants";
 import { sleep } from "@/lib/sleep";
-import { insertTodo, patchTodo, removeTodo } from "@/lib/store";
+import { bulkMutateTodos, insertTodo, patchTodo, removeTodo } from "@/lib/store";
 import type { ActionState, BulkKind, BulkUpdate } from "@/lib/types";
 
 /** Validation lives here, on the server, once — not duplicated per input. */
@@ -23,9 +23,16 @@ export async function createTodo(
     const text = readText(formData.get("todo"));
     if (typeof text !== "string") return { ok: false, error: text.error };
 
-    await insertTodo(text);
-    revalidatePath("/");
-    return { ok: true, nonce: Date.now() };
+    try {
+        await insertTodo(text);
+        revalidatePath("/");
+        return { ok: true, nonce: Date.now() };
+    } catch (error) {
+        return {
+            ok: false,
+            error: error instanceof Error ? error.message : "Failed to save todo.",
+        };
+    }
 }
 
 export async function renameTodo(
@@ -61,34 +68,27 @@ export async function deleteTodo(id: number) {
 /**
  * Bulk action as an async generator Server Action.
  *
- * Next converts this into a stream the client consumes with `for await`.
- * The old NDJSON route handler did the same thing by hand: a ReadableStream,
- * a TextDecoder, manual line-splitting, and a `status` field the client then
- * forgot to read. Here the update is a typed object and failures are
- * structurally impossible to ignore — the client switches on `status`.
+ * Commits the batch update to the cookie before streaming begins, ensuring
+ * HTTP Set-Cookie headers are sent before response chunks. Then streams
+ * the progress updates with pacing to drive the client-side UI animations.
  */
 export async function* bulkAction(
     ids: number[],
     kind: BulkKind,
 ): AsyncGenerator<BulkUpdate> {
+    let results: Map<number, boolean>;
+    try {
+        results = await bulkMutateTodos(ids, kind);
+    } catch {
+        results = new Map();
+    }
+
     for (const id of ids) {
         await sleep(BULK_PACE_MS);
-        try {
-            const done =
-                kind === "delete"
-                    ? await removeTodo(id)
-                    : Boolean(await patchTodo(id, { completed: kind === "complete" }));
-
-            yield done
-                ? { id, status: "success" }
-                : { id, status: "failed", reason: "No longer exists" };
-        } catch (error) {
-            yield {
-                id,
-                status: "failed",
-                reason: error instanceof Error ? error.message : "Unknown error",
-            };
-        }
+        const done = results.get(id) ?? false;
+        yield done
+            ? { id, status: "success" }
+            : { id, status: "failed", reason: "No longer exists" };
     }
 
     revalidatePath("/");
