@@ -1,38 +1,33 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
-import { Toaster } from "@/components/ui/toast";
+import { Inter, IBM_Plex_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const sans = Inter({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-});
-
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Todos - Minimalist Task Manager",
-  description: "Bulk operations with live streaming progress",
+  title: "Todos",
+  description: "A server-rendered todo list with streamed bulk actions.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} antialiased`}
-    >
-      <body className="min-h-screen flex flex-col bg-[#fafafa] text-slate-800 overflow-x-clip">
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+      <body>
         {children}
-        <Toaster />
+        <Toaster position="bottom-right" closeButton />
       </body>
     </html>
   );

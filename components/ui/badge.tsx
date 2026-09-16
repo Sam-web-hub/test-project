@@ -24,6 +24,8 @@ const badgeVariants = cva(
           "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 font-medium shadow-none",
         completed:
           "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-medium shadow-none",
+        selected:
+          "h-auto rounded-md px-2.5 py-1 font-semibold tabular-nums bg-indigo-50 text-indigo-700 border-indigo-200/60 shadow-none",
       },
     },
     defaultVariants: {
