@@ -55,7 +55,7 @@ export function DetailTitle({
             <div className="flex items-start justify-between gap-4">
                 <h1
                     className={cn(
-                        "text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight break-words",
+                        "text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight wrap break-word",
                         completed && "line-through text-slate-400",
                     )}
                 >
