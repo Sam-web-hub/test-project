@@ -18,7 +18,7 @@ export default function Page() {
                 <div className="flex items-center gap-3">
                     <h1 className="text-3xl font-semibold text-slate-900 tracking-tight flex items-center gap-2.5">
                         <span>Todos</span>
-                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 shadow-sm shadow-indigo-300" aria-hidden="true" />
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-linear-to-tr from-indigo-500 to-violet-500 shadow-sm shadow-indigo-300" aria-hidden="true" />
                     </h1>
                 </div>
             </header>
